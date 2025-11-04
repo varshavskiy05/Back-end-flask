@@ -16,4 +16,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app
 
 
-CMD bash -lc "flask db upgrade && gunicorn 'myapp:create_app()' --bind 0.0.0.0:${PORT:-8080}"
+CMD bash -lc "if [ ! -d migrations ]; then flask db init; fi; flask db migrate -m 'autogen' || true; flask db upgrade; gunicorn 'myapp:create_app()' --bind 0.0.0.0:${PORT:-8080}"
