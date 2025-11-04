@@ -15,5 +15,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app
 
-# 3) нормальный старт для продакшена
-CMD gunicorn "myapp:create_app()" --bind 0.0.0.0:${PORT:-8080}
+
+CMD flask --app myapp run -h 0.0.0.0 -p $PORT
