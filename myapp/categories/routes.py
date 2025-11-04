@@ -1,30 +1,82 @@
-from flask import request, jsonify
+from flask.views import MethodView
+from flask_smorest import abort
+from sqlalchemy import func
+
 from myapp.categories import bp
-from myapp import models
+from myapp.models import db, Category
+from myapp.schemas import CategorySchema, CategoryCreateSchema, CategoryUpdateSchema
 
 
-@bp.route("/category", methods=["GET"])
-def list_categories():
-    return jsonify(list(models.categories.values()))
+@bp.route('/category')
+class CategoryList(MethodView):
+    """Робота зі списком категорій"""
+
+    @bp.response(200, CategorySchema(many=True))
+    def get(self):
+        """Отримати всі категорії"""
+        categories = Category.query.order_by(Category.name.asc()).all()
+        return categories
+
+    @bp.arguments(CategoryCreateSchema)
+    @bp.response(201, CategorySchema)
+    def post(self, category_data):
+        """Створити нову категорію"""
+        existing = Category.query.filter(func.lower(Category.name) == category_data['name'].lower()).first()
+        if existing:
+            abort(400, message='Category with this name already exists')
+
+        category = Category(**category_data)
+        db.session.add(category)
+        
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            abort(500, message=f'Error creating category: {str(e)}')
+        
+        return category
 
 
-@bp.route("/category", methods=["POST"])
-def create_category():
-    data = request.get_json(force=True, silent=True)
-    if not data or "name" not in data:
-        return jsonify({"error": "Invalid input"}), 400
-    category = models.create_category(data["name"])
-    return jsonify(category), 201
+@bp.route('/category/<int:category_id>')
+class CategoryDetail(MethodView):
+    """Робота з окремою категорією"""
 
+    @bp.response(200, CategorySchema)
+    def get(self, category_id):
+        """Отримати категорію за ID"""
+        category = Category.query.get_or_404(category_id, description='Category not found')
+        return category
 
+    @bp.arguments(CategoryUpdateSchema)
+    @bp.response(200, CategorySchema)
+    def patch(self, update_data, category_id):
+        """Оновити категорію"""
+        category = Category.query.get_or_404(category_id, description='Category not found')
+        
+        # Оновлюємо поля
+        for key, value in update_data.items():
+            setattr(category, key, value)
+        
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            abort(500, message=f'Error updating category: {str(e)}')
+        
+        return category
 
-@bp.route("/category", methods=["DELETE"])
-def delete_category():
-    data = request.json
-    if not data or "id" not in data:
-        return jsonify({"error": "Category id is required"}), 400
-    cid = data["id"]
-    if cid in models.categories:
-        del models.categories[cid]
-        return jsonify({"message": "Category deleted"})
-    return jsonify({"error": "Category not found"}), 404
+    @bp.response(204)
+    def delete(self, category_id):
+        """Видалити категорію"""
+        category = Category.query.get_or_404(category_id, description='Category not found')
+        
+        # Перевіряємо чи не використовується категорія
+        if category.records:
+            abort(400, message='Cannot delete category that has records')
+        
+        try:
+            db.session.delete(category)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            abort(500, message=f'Error deleting category: {str(e)}')

@@ -1,35 +1,72 @@
-from flask import request, jsonify
+from flask.views import MethodView
+from flask_smorest import abort
 from myapp.users import bp
-from myapp import models
+from myapp.models import db, User
+from myapp.schemas import UserSchema, UserCreateSchema, UserUpdateSchema
 
 
-@bp.route("/user/<int:user_id>", methods=["GET"])
-def get_user(user_id):
-    user = models.users.get(user_id)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-    return jsonify(user)
+@bp.route('/user')
+class UserList(MethodView):
+    """Робота зі списком користувачів"""
+
+    @bp.response(200, UserSchema(many=True))
+    def get(self):
+        """Отримати всіх користувачів"""
+        users = User.query.all()
+        return users
+
+    @bp.arguments(UserCreateSchema)
+    @bp.response(201, UserSchema)
+    def post(self, user_data):
+        """Створити нового користувача"""
+        user = User(**user_data)
+        db.session.add(user)
+        
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            abort(500, message=f'Error creating user: {str(e)}')
+        
+        return user
 
 
-@bp.route("/user/<int:user_id>", methods=["DELETE"])
-def delete_user(user_id):
-    user = models.users.get(user_id)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-    models.users.delete(user_id)
-    return jsonify({"message": "User deleted"}), 200
+@bp.route('/user/<int:user_id>')
+class UserDetail(MethodView):
+    """Робота з окремим користувачем"""
 
+    @bp.response(200, UserSchema)
+    def get(self, user_id):
+        """Отримати користувача за ID"""
+        user = User.query.get_or_404(user_id, description='User not found')
+        return user
 
-@bp.route("/user", methods=["POST"])
-def create_user():
-    data = request.get_json(force=True, silent=True)
-    if not data or "name" not in data:
-        return jsonify({"error": "Invalid input"}), 400
-    user = models.create_user(data["name"])
-    return jsonify(user), 201
+    @bp.arguments(UserUpdateSchema)
+    @bp.response(200, UserSchema)
+    def patch(self, update_data, user_id):
+        """Оновити користувача"""
+        user = User.query.get_or_404(user_id, description='User not found')
+        
+        # Оновлюємо поля
+        for key, value in update_data.items():
+            setattr(user, key, value)
+        
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            abort(500, message=f'Error updating user: {str(e)}')
+        
+        return user
 
-
-
-@bp.route("/users", methods=["GET"])
-def list_users():
-    return jsonify(list(models.users.values()))
+    @bp.response(204)
+    def delete(self, user_id):
+        """Видалити користувача"""
+        user = User.query.get_or_404(user_id, description='User not found')
+        
+        try:
+            db.session.delete(user)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            abort(500, message=f'Error deleting user: {str(e)}')
