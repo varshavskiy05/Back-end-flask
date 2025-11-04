@@ -1,4 +1,4 @@
-# Expenses Tracker API (Коротко)
+# Expenses Tracker API 
 
 - Вариант: 0 (облік доходів). Доходи поповнюють баланс рахунку, витрати списують, «мінус» заборонений.
 - Стек: Flask 3, Flask‑SQLAlchemy, Flask‑Migrate, Flask‑Smorest (Swagger), Marshmallow, PostgreSQL.
