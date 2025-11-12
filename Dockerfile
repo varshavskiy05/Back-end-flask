@@ -16,4 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app
 
 
-CMD ["/bin/sh","-lc","if [ ! -d migrations ]; then flask db init; fi; flask db migrate -m autogen || true; flask db upgrade; exec gunicorn \"myapp:create_app()\" --bind 0.0.0.0:${PORT:-8080}"]
+CMD if [ ! -d migrations ]; then flask db init; fi; \
+    flask db migrate -m autogen || true; \
+    flask db upgrade; \
+    exec gunicorn "myapp:create_app()" --bind 0.0.0.0:${PORT:-8080}
