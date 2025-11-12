@@ -1,6 +1,7 @@
 from flask.views import MethodView
 from flask_smorest import abort
 from flask import request
+from flask_jwt_extended import jwt_required
 from myapp.records import bp
 from myapp.models import db, Record, User, Category, Account
 from myapp.schemas import RecordSchema, RecordCreateSchema, RecordUpdateSchema, RecordQuerySchema
@@ -13,6 +14,7 @@ class RecordList(MethodView):
 
     @bp.arguments(RecordQuerySchema, location='query')
     @bp.response(200, RecordSchema(many=True))
+    @jwt_required()
     def get(self, query_args):
         """Отримати записи витрат (можна фільтрувати по user_id та/або category_id)"""
         user_id = query_args.get('user_id')
@@ -30,6 +32,7 @@ class RecordList(MethodView):
 
     @bp.arguments(RecordCreateSchema)
     @bp.response(201, RecordSchema)
+    @jwt_required()
     def post(self, record_data):
         """Створити новий запис витрат і списати суму з рахунку"""
         # Перевіряємо чи існує користувач
@@ -73,6 +76,7 @@ class RecordDetail(MethodView):
     """Робота з окремим записом витрат"""
 
     @bp.response(200, RecordSchema)
+    @jwt_required()
     def get(self, record_id):
         """Отримати запис витрат за ID"""
         record = Record.query.get_or_404(record_id, description='Record not found')
@@ -80,6 +84,7 @@ class RecordDetail(MethodView):
 
     @bp.arguments(RecordUpdateSchema)
     @bp.response(200, RecordSchema)
+    @jwt_required()
     def patch(self, update_data, record_id):
         """Оновити запис витрат"""
         record = Record.query.get_or_404(record_id, description='Record not found')
@@ -116,6 +121,7 @@ class RecordDetail(MethodView):
         return record
 
     @bp.response(204)
+    @jwt_required()
     def delete(self, record_id):
         """Видалити запис витрат (і повернути суму на рахунок)"""
         record = Record.query.get_or_404(record_id, description='Record not found')

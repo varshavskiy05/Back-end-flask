@@ -1,5 +1,6 @@
 from flask.views import MethodView
 from flask_smorest import abort
+from flask_jwt_extended import jwt_required
 from myapp.users import bp
 from myapp.models import db, User
 from myapp.schemas import UserSchema, UserCreateSchema, UserUpdateSchema
@@ -10,6 +11,7 @@ class UserList(MethodView):
     """Робота зі списком користувачів"""
 
     @bp.response(200, UserSchema(many=True))
+    @jwt_required()
     def get(self):
         """Отримати всіх користувачів"""
         users = User.query.all()
@@ -17,6 +19,7 @@ class UserList(MethodView):
 
     @bp.arguments(UserCreateSchema)
     @bp.response(201, UserSchema)
+    @jwt_required()
     def post(self, user_data):
         """Створити нового користувача"""
         user = User(**user_data)
@@ -36,6 +39,7 @@ class UserDetail(MethodView):
     """Робота з окремим користувачем"""
 
     @bp.response(200, UserSchema)
+    @jwt_required()
     def get(self, user_id):
         """Отримати користувача за ID"""
         user = User.query.get_or_404(user_id, description='User not found')
@@ -43,6 +47,7 @@ class UserDetail(MethodView):
 
     @bp.arguments(UserUpdateSchema)
     @bp.response(200, UserSchema)
+    @jwt_required()
     def patch(self, update_data, user_id):
         """Оновити користувача"""
         user = User.query.get_or_404(user_id, description='User not found')
@@ -60,6 +65,7 @@ class UserDetail(MethodView):
         return user
 
     @bp.response(204)
+    @jwt_required()
     def delete(self, user_id):
         """Видалити користувача"""
         user = User.query.get_or_404(user_id, description='User not found')

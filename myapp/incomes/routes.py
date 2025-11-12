@@ -1,6 +1,7 @@
 from flask.views import MethodView
 from flask_smorest import abort
 from flask import request
+from flask_jwt_extended import jwt_required
 from myapp.incomes import bp
 from myapp.models import db, Income, User, Account
 from myapp.schemas import IncomeSchema, IncomeCreateSchema
@@ -12,6 +13,7 @@ class IncomeList(MethodView):
     """Робота зі списком доходів"""
 
     @bp.response(200, IncomeSchema(many=True))
+    @jwt_required()
     def get(self):
         """Отримати всі доходи (з фільтрацією по user_id)"""
         user_id = request.args.get('user_id', type=int)
@@ -25,6 +27,7 @@ class IncomeList(MethodView):
 
     @bp.arguments(IncomeCreateSchema)
     @bp.response(201, IncomeSchema)
+    @jwt_required()
     def post(self, income_data):
         """Створити новий дохід і автоматично додати його до рахунку користувача"""
         # Перевіряємо чи існує користувач
@@ -58,12 +61,14 @@ class IncomeDetail(MethodView):
     """Робота з окремим доходом"""
 
     @bp.response(200, IncomeSchema)
+    @jwt_required()
     def get(self, income_id):
         """Отримати дохід за ID"""
         income = Income.query.get_or_404(income_id, description='Income not found')
         return income
 
     @bp.response(204)
+    @jwt_required()
     def delete(self, income_id):
         """Видалити дохід (і відняти суму з рахунку)"""
         income = Income.query.get_or_404(income_id, description='Income not found')

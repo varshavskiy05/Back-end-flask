@@ -5,6 +5,7 @@ from marshmallow import Schema, fields, validate, validates, ValidationError
 class UserSchema(Schema):
     """Схема для користувача"""
     id = fields.Int(dump_only=True)
+    username = fields.Str(dump_only=True)
     name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     created_at = fields.DateTime(dump_only=True)
 
@@ -136,4 +137,18 @@ class RecordQuerySchema(Schema):
     """Схема для фільтрації записів"""
     user_id = fields.Int()
     category_id = fields.Int()
+
+
+# Auth Schemas
+class AuthRegisterSchema(Schema):
+    """Схема реєстрації"""
+    username = fields.Str(required=True, validate=validate.Length(min=3, max=80))
+    password = fields.Str(required=True, validate=validate.Length(min=6, max=128))
+    name = fields.Str(required=False, validate=validate.Length(min=1, max=100))
+
+
+class AuthLoginSchema(Schema):
+    """Схема логіну"""
+    username = fields.Str(required=True)
+    password = fields.Str(required=True)
 

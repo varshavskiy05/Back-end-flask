@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from flask.views import MethodView
 from flask_smorest import abort
+from flask_jwt_extended import jwt_required
 
 from myapp.accounts import bp
 from myapp.models import db, Account, User
@@ -13,6 +14,7 @@ class AccountList(MethodView):
     """Робота зі списком рахунків"""
 
     @bp.response(200, AccountSchema(many=True))
+    @jwt_required()
     def get(self):
         """Отримати всі рахунки"""
         accounts = Account.query.all()
@@ -20,6 +22,7 @@ class AccountList(MethodView):
 
     @bp.arguments(AccountCreateSchema)
     @bp.response(201, AccountSchema)
+    @jwt_required()
     def post(self, account_data):
         """Створити новий рахунок"""
         # Перевіряємо чи існує користувач
@@ -49,6 +52,7 @@ class AccountDetail(MethodView):
     """Робота з окремим рахунком"""
 
     @bp.response(200, AccountSchema)
+    @jwt_required()
     def get(self, account_id):
         """Отримати рахунок за ID"""
         account = Account.query.get_or_404(account_id, description='Account not found')
@@ -56,6 +60,7 @@ class AccountDetail(MethodView):
 
     @bp.arguments(AccountUpdateSchema)
     @bp.response(200, AccountSchema)
+    @jwt_required()
     def patch(self, update_data, account_id):
         """Оновити рахунок"""
         account = Account.query.get_or_404(account_id, description='Account not found')
@@ -76,6 +81,7 @@ class AccountDetail(MethodView):
         return account
 
     @bp.response(204)
+    @jwt_required()
     def delete(self, account_id):
         """Видалити рахунок"""
         account = Account.query.get_or_404(account_id, description='Account not found')
@@ -93,6 +99,7 @@ class AccountByUser(MethodView):
     """Отримати рахунок користувача"""
 
     @bp.response(200, AccountSchema)
+    @jwt_required()
     def get(self, user_id):
         """Отримати рахунок користувача за user_id"""
         account = Account.query.filter_by(user_id=user_id).first()
