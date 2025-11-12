@@ -42,15 +42,4 @@ bash -lc "flask db upgrade && gunicorn 'myapp:create_app()' --bind 0.0.0.0:$PORT
 - Incomes: `/api/income` (поповнює баланс)
 - Records: `/api/record` (списує баланс)
 
-## Деталі та посилання
-- Установка/налаштування: `SETUP_GUIDE.md`, `QUICKSTART.md`
-- Сценарії тестування: `TESTING_SCENARIOS.md`, скрипт `test_api.sh`
-- Підсумок і критерії: `PROJECT_SUMMARY.md`, `LAB_CHECKLIST.md`
-- Git/команди: `GIT_WORKFLOW.md`, `COMMANDS_REFERENCE.md`
-- Postman: `Expenses_API.postman_collection.json`, `Expenses_API.postman_environment.json`
-
-## Що додати в звіт
-- Лінк на репозиторій і тег `v2.0.0`
-- Лінк на деплой (Render) + скріни `/health`, `/swagger-ui`
-- 2–3 успішні запити (user/account/income/record) і 1 помилка (валідація або insufficient funds)
 
